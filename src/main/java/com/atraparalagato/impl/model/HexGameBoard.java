@@ -8,48 +8,48 @@ import java.util.function.Predicate;
 
 /**
  * Representa el tablero hexagonal del juego "Atrapar al Gato".
- * Administra las posiciones válidas, las celdas bloqueadas por el jugador
- * y calcula los vecinos de una celda hexagonal.
  */
 public class HexGameBoard extends GameBoard {
 
-    private final int size;
-    private final Set<Position> blockedPositions;
+    private Set<Position> blockedPositions;
 
-    /* Constructor del tablero hexagonal.
-    Llama al constructor de GameBoard (super) con el tamaño. */
+    /**
+     * Constructor que llama al constructor de GameBoard con el tamaño.
+     */
     public HexGameBoard(int size) {
         super(size);
-        this.size = size;
-        this.blockedPositions = new HashSet<>();
+        // No inicialices blockedPositions aquí: se inicializa en initializeBlockedPositions()
     }
 
-    /* Inicializa o reinicia las posiciones bloqueadas.
-        Retorna el conjunto vacío actualizado, según lo que espera la clase base.
+    /**
+     * Inicializa o reinicia el conjunto de posiciones bloqueadas.
+     * Este método es invocado automáticamente por GameBoard.
      */
     @Override
     public Set<Position> initializeBlockedPositions() {
-        blockedPositions.clear();
+        if (blockedPositions == null) {
+            blockedPositions = new HashSet<>();
+        } else {
+            blockedPositions.clear();
+        }
         return blockedPositions;
     }
 
     /**
-     * Verifica si una posición (q, r) está dentro del tablero hexagonal.
-     * Un tablero de tamaño N incluye todas las posiciones donde:
-     * |q| <= N, |r| <= N y |q + r| <= N
+     * Verifica si una posición (q, r) está dentro de los límites del tablero hexagonal.
      */
     @Override
     public boolean isPositionInBounds(Position pos) {
         int q = ((HexPosition) pos).getQ();
         int r = ((HexPosition) pos).getR();
         int s = -q - r;
+        int size = getSize();
 
         return Math.abs(q) <= size && Math.abs(r) <= size && Math.abs(s) <= size;
     }
 
     /**
-     * Verifica si una posición ya fue bloqueada por el jugador.
-     * Las posiciones bloqueadas están almacenadas en un conjunto (Set).
+     * Verifica si una posición está bloqueada.
      */
     @Override
     public boolean isBlocked(Position pos) {
@@ -57,10 +57,7 @@ public class HexGameBoard extends GameBoard {
     }
 
     /**
-     * Retorna las 6 posiciones vecinas de una celda hexagonal.
-     * Se descartan las posiciones que:
-     *  - Están fuera del tablero
-     *  - Están bloqueadas
+     * Retorna las posiciones vecinas que están en el tablero y no están bloqueadas.
      */
     @Override
     public List<Position> getAdjacentPositions(Position pos) {
@@ -70,7 +67,6 @@ public class HexGameBoard extends GameBoard {
         };
 
         List<Position> neighbors = new ArrayList<>();
-
         int q = ((HexPosition) pos).getQ();
         int r = ((HexPosition) pos).getR();
 
@@ -88,13 +84,13 @@ public class HexGameBoard extends GameBoard {
     }
 
     /**
-     * Devuelve una lista de posiciones del tablero que cumplen una condición dada.
-     * Usa un Predicate (sin genéricos) como en la clase base para evitar errores de erasure.
+     * Retorna todas las posiciones del tablero que cumplen una condición dada.
      */
     @SuppressWarnings("unchecked")
     @Override
     public List<Position> getPositionsWhere(Predicate condition) {
         List<Position> result = new ArrayList<>();
+        int size = getSize();
 
         for (int q = -size; q <= size; q++) {
             for (int r = -size; r <= size; r++) {
@@ -109,8 +105,7 @@ public class HexGameBoard extends GameBoard {
     }
 
     /**
-     * Verifica si una posición puede ser bloqueada por el jugador.
-     * Debe estar dentro del tablero y no estar ya bloqueada.
+     * Verifica si una posición se puede bloquear (está en el tablero y no está ocupada).
      */
     @Override
     public boolean isValidMove(Position pos) {
@@ -118,8 +113,7 @@ public class HexGameBoard extends GameBoard {
     }
 
     /**
-     * Ejecuta un movimiento del jugador, bloqueando la celda indicada.
-     * Si la jugada no es válida, lanza una excepción.
+     * Bloquea una celda válida. Si no es válida, lanza una excepción.
      */
     @Override
     public void executeMove(Position pos) {
